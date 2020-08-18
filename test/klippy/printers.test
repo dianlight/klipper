@@ -5,6 +5,7 @@ GCODE move.gcode
 DICTIONARY atmega2560.dict
 CONFIG ../../config/example.cfg
 CONFIG ../../config/example-corexy.cfg
+CONFIG ../../config/example-corexz.cfg
 CONFIG ../../config/example-delta.cfg
 CONFIG ../../config/example-rotary-delta.cfg
 CONFIG ../../config/example-winch.cfg
@@ -124,6 +125,7 @@ CONFIG ../../config/generic-fysetc-cheetah-v1.2.cfg
 CONFIG ../../config/generic-mks-robin-e3.cfg
 CONFIG ../../config/generic-mks-robin-nano.cfg
 CONFIG ../../config/printer-alfawise-u30-2018.cfg
+CONFIG ../../config/printer-creality-ender3-v2-2020.cfg
 CONFIG ../../config/printer-twotrees-sapphire-pro-2020.cfg
 
 # Printers using the stm32f407
