@@ -35,6 +35,10 @@ defs_stepcompress = """
         , int32_t set_next_step_dir_msgtag);
     void stepcompress_free(struct stepcompress *sc);
     int stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
+    int stepcompress_set_last_position(struct stepcompress *sc
+        , int64_t last_position);
+    int64_t stepcompress_find_past_position(struct stepcompress *sc
+        , uint64_t clock);
     int stepcompress_queue_msg(struct stepcompress *sc
         , uint32_t *data, int len);
 
@@ -141,7 +145,8 @@ defs_serialqueue = """
         uint64_t notify_id;
     };
 
-    struct serialqueue *serialqueue_alloc(int serial_fd, int write_only);
+    struct serialqueue *serialqueue_alloc(int serial_fd, char serial_fd_type
+        , int client_id);
     void serialqueue_exit(struct serialqueue *sq);
     void serialqueue_free(struct serialqueue *sq);
     struct command_queue *serialqueue_alloc_commandqueue(void);
