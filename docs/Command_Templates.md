@@ -66,7 +66,25 @@ wrapped in `{% %}`. See the
 [Jinja2 documentation](http://jinja.pocoo.org/docs/2.10/templates/)
 for further information on the syntax.
 
-This is most often used to inspect parameters passed to the macro when
+An example of a complex macro:
+```
+[gcode_macro clean_nozzle]
+gcode:
+  {% set wipe_count = 8 %}
+  SAVE_GCODE_STATE NAME=clean_nozzle_state
+  G90
+  G0 Z15 F300
+  {% for wipe in range(wipe_count) %}
+    {% for coordinate in [(275,4),(235,4)] %}
+      G0 X{coordinate[0]} Y{coordinate[1] + 0.25 * wipe} Z9.7 F12000
+    {% endfor %}
+  {% endfor %}
+  RESTORE_GCODE_STATE NAME=clean_nozzle_state
+```
+
+#### Macro parameters
+
+It is often useful to inspect parameters passed to the macro when
 it is called. These parameters are available via the `params`
 pseudo-variable. For example, if the macro:
 
@@ -81,21 +99,15 @@ at 20%`. Note that parameter names are always in upper-case when
 evaluated in the macro and are always passed as strings. If performing
 math then they must be explicitly converted to integers or floats.
 
-An example of a complex macro:
+It's common to use the Jinja2 `set` directive to use a default
+parameter and assign the result to a local name. For example:
+
 ```
-[gcode_macro clean_nozzle]
+[gcode_macro SET_BED_TEMPERATURE]
 gcode:
-  SAVE_GCODE_STATE NAME=clean_nozzle_state
-  G90
-  G0 Z15 F300
-  {% for wipe in range(8) %}
-    {% for coordinate in [(275,4),(235,4)] %}
-      G0 X{coordinate[0]} Y{coordinate[1] + 0.25 * wipe} Z9.7 F12000
-    {% endfor %}
-  {% endfor %}
-  RESTORE_GCODE_STATE NAME=clean_nozzle_state
+  {% set bed_temp = params.TEMPERATURE|default(40)|float %}
+  M140 S{bed_temp}
 ```
-<!-- {% endraw %} -->
 
 #### The "printer" Variable
 
@@ -202,6 +214,9 @@ The following are common printer attributes:
   limits that are in effect. This may differ from the config file
   settings if a `SET_VELOCITY_LIMIT` (or `M204`) command alters them
   at run-time.
+- `printer.toolhead.stalls`: The total number of times (since the last
+  restart) that the printer had to be paused because the toolhead
+  moved faster than moves could be read from the G-Code input.
 - `printer.heaters.available_heaters`: Returns a list of all currently
   available heaters by their full config section names,
   e.g. `["extruder", "heater_bed", "heater_generic my_custom_heater"]`.
@@ -218,8 +233,10 @@ The following are common printer attributes:
   as "triggered" during the last QUERY_PROBE command. Note, due to the
   order of template expansion (see above), the QUERY_PROBE command
   must be run prior to the macro containing this reference.
-- `printer.probe.last_z_result`: Returns the Z result value of the last
-  PROBE command.
+- `printer.probe.last_z_result`: Returns the Z result value of the
+  last PROBE command. Note, due to the order of template expansion
+  (see above), the PROBE (or similar) command must be run prior to the
+  macro containing this reference.
 - `printer.configfile.settings.<section>.<option>`: Returns the given
   config file setting (or default value) during the last software
   start or restart. (Any settings changed at run-time will not be
@@ -307,6 +324,15 @@ The following are common printer attributes:
   between micro-controller architectures and with each code revision.
 - `printer.mcu.last_stats.<statistics_name>`: Statistics information
   on the micro-controller connection.
+- `printer.system_stats.sysload`, `printer.system_stats.cputime`,
+  `printer.system_stats.memavail`: Information on the host operating
+  system and process load.
+- `printer.palette2.ping`: Amount of the last reported Palette 2 ping
+  in percent.
+- `printer.palette2.remaining_load_length`: When starting a Palette 2
+  print, this will be the amount of filament to load into the extruder.
+- `printer.palette2.is_splicing`: True when the Palette 2 is splicing
+  filament.
 
 The above list is subject to change - if using an attribute be sure to
 review the [Config Changes document](Config_Changes.md) when upgrading
@@ -314,6 +340,17 @@ the Klipper software. The above list is not exhaustive.  Other
 attributes may be available (via `get_status()` methods defined in the
 software). However, undocumented attributes may change without notice
 in future Klipper releases.
+
+Note that the Jinja2 `set` directive can assign a local name to an
+object in the `printer` hierarchy. This can make macros more readable
+and reduce typing. For example:
+```
+[gcode_macro QUERY_HTU21D]
+gcode:
+    {% set sensor = printer["htu21d my_sensor"] %}
+    M117 Temp:{sensor.temperature} Humidity:{sensor.humidity}
+```
+<!-- {% endraw %} -->
 
 ### Actions
 
