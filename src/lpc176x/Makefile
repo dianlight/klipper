@@ -34,3 +34,9 @@ $(OUT)klipper.bin: $(OUT)klipper.elf
 flash: $(OUT)klipper.bin
 	@echo "  Flashing $< to $(FLASH_DEVICE)"
 	$(Q)$(PYTHON) ./scripts/flash_usb.py -t $(CONFIG_MCU) -d "$(FLASH_DEVICE)" $(if $(NOSUDO),--no-sudo) $(OUT)klipper.bin
+
+# Flash sdCard rules
+flashsd: $(OUT)klipper.bin
+	@echo "  Flashing $< to $(BOARD) $(FLASH_DEVICE)"
+	$(Q) ./scripts/flash-sdcard.sh -f $(OUT)klipper.bin "$(FLASH_DEVICE)" "$(BOARD)"
+
