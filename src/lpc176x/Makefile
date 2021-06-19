@@ -39,5 +39,4 @@ flash: $(OUT)klipper.bin
 # Flash sdCard rules
 flashsd: $(OUT)klipper.bin
 	@echo "  Flashing $< to $(BOARD) $(FLASH_DEVICE)"
-	$(Q) ./scripts/flash-sdcard.sh -f $(OUT)klipper.bin "$(FLASH_DEVICE)" "$(BOARD)"
-
+	$(Q) ./scripts/flash-sdcard.sh -f $(OUT)klipper.bin -b 256000 "$(FLASH_DEVICE)" "$(BOARD)"
