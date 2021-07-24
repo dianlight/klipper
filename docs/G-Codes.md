@@ -456,12 +456,13 @@ The following commands are available when the
 [screws_tilt_adjust config section](Config_Reference.md#screws_tilt_adjust)
 is enabled (also see the
 [manual level guide](Manual_Level.md#adjusting-bed-leveling-screws-using-the-bed-probe)):
-- `SCREWS_TILT_CALCULATE [<probe_parameter>=<value>]`: This command
-  will invoke the bed screws adjustment tool. It will command the
+- `SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW] [<probe_parameter>=<value>]`:
+  This command will invoke the bed screws adjustment tool. It will command the
   nozzle to different locations (as defined in the config file)
   probing the z height and calculate the number of knob turns to
-  adjust the bed level. See the PROBE command for details on the
-  optional probe parameters.
+  adjust the bed level. If DIRECTION is specified, the knob turns will all
+  be in the same direction, clockwise (CW) or counterclockwise (CCW).
+  See the PROBE command for details on the optional probe parameters.
   IMPORTANT: You MUST always do a G28 before using this command.
 
 ## Z Tilt
@@ -754,9 +755,13 @@ is enabled (also see the
 - `TEST_RESONANCES AXIS=<axis> OUTPUT=<resonances,raw_data>
   [NAME=<name>] [FREQ_START=<min_freq>] [FREQ_END=<max_freq>]
   [HZ_PER_SEC=<hz_per_sec>] [INPUT_SHAPING=[<0:1>]]`: Runs the resonance
-  test in all configured probe points for the requested axis (X or Y)
+  test in all configured probe points for the requested <axis>
   and measures the acceleration using the accelerometer chips configured
-  for the respective axis. If `INPUT_SHAPING=0` or not set (default),
+  for the respective axis. <axis> can either be X or Y, or specify an
+  arbitrary direction as `AXIS=dx,dy`, where dx and dy are floating point
+  numbers defining a direction vector (e.g. `AXIS=X`, `AXIS=Y`, or
+  `AXIS=1,-1` to define a diagonal direction). Note that `AXIS=dx,dy` and
+  `AXIS=-dx,-dy` is equivalent. If `INPUT_SHAPING=0` or not set (default),
   disables input shaping for the resonance testing, because it is not valid
   to run the resonance testing with the input shaper enabled.
   `OUTPUT` parameter is a comma-separated list of which outputs will be
