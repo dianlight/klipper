@@ -63,9 +63,14 @@ BOARD_DEFS = {
     },
     'btt-octopus': {
         'mcu': "stm32f446xx",
-        'spi_bus':"swspi",
-        'spi_pins':"PC8,PD2,PC12",
-        'cs_pin':"PC11"
+        'spi_bus': "swspi",
+        'spi_pins': "PC8,PD2,PC12",
+        'cs_pin': "PC11"
+    },
+    'btt-skr-se-bx': {
+        'mcu': 'stm32h743xx',
+        'spi_bus': 'spi3a',
+        'cs_pin': 'PA15'
     }
 }
 
@@ -104,8 +109,10 @@ BOARD_ALIASES = {
     'btt-octopus-v1': BOARD_DEFS['btt-octopus']
 }
 
+
 def list_boards():
     return sorted(list(BOARD_DEFS.keys()) + list(BOARD_ALIASES.keys()))
+
 
 def lookup_board(name):
     name = name.lower()
