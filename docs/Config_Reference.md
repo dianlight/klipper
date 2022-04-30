@@ -732,14 +732,17 @@ control:
 #   Control algorithm (either pid or watermark). This parameter must
 #   be provided.
 pid_Kp:
-#   Kp is the "proportional" constant for the pid. This parameter must
-#   be provided for PID heaters.
 pid_Ki:
-#   Ki is the "integral" constant for the pid. This parameter must be
-#   provided for PID heaters.
 pid_Kd:
-#   Kd is the "derivative" constant for the pid. This parameter must
-#   be provided for PID heaters.
+#   The proportional (pid_Kp), integral (pid_Ki), and derivative
+#   (pid_Kd) settings for the PID feedback control system. Klipper
+#   evaluates the PID settings with the following general formula:
+#     heater_pwm = (Kp*error + Ki*integral(error) - Kd*derivative(error)) / 255
+#   Where "error" is "requested_temperature - measured_temperature"
+#   and "heater_pwm" is the requested heating rate with 0.0 being full
+#   off and 1.0 being full on. Consider using the PID_CALIBRATE
+#   command to obtain these parameters. The pid_Kp, pid_Ki, and pid_Kd
+#   parameters must be provided for PID heaters.
 #max_delta: 2.0
 #   On 'watermark' controlled heaters this is the number of degrees in
 #   Celsius above the target temperature before disabling the heater
@@ -996,10 +999,10 @@ information.
 [screws_tilt_adjust]
 #screw1:
 #   The (X, Y) coordinate of the first bed leveling screw. This is a
-#   position to command the nozzle to that is directly above the bed
-#   screw (or as close as possible while still being above the bed).
-#   This is the base screw used in calculations. This parameter must
-#   be provided.
+#   position to command the nozzle to so that the probe is directly
+#   above the bed screw (or as close as possible while still being
+#   above the bed). This is the base screw used in calculations. This
+#   parameter must be provided.
 #screw1_name:
 #   An arbitrary name for the given screw. This name is displayed when
 #   the helper script runs. The default is to use a name based upon
@@ -1545,8 +1548,8 @@ section of the measuring resonances guide for more information on
 #   for more details on using this feature.
 #min_freq: 5
 #   Minimum frequency to test for resonances. The default is 5 Hz.
-#max_freq: 120
-#   Maximum frequency to test for resonances. The default is 120 Hz.
+#max_freq: 133.33
+#   Maximum frequency to test for resonances. The default is 133.33 Hz.
 #accel_per_hz: 75
 #   This parameter is used to determine which acceleration to use to
 #   test a specific frequency: accel = accel_per_hz * freq. Higher the
@@ -1741,6 +1744,60 @@ control_pin:
 #samples_tolerance:
 #samples_tolerance_retries:
 #   See the "probe" section for information on these parameters.
+```
+
+### [smart_effector]
+
+The "Smart Effector" from Duet3d implements a Z probe using a force
+sensor. One may define this section instead of `[probe]` to enable the
+Smart Effector specific features. This also enables
+[runtime commands](G-Codes.md#smart_effector) to adjust the parameters
+of the Smart Effector at run time.
+
+```
+[smart_effector]
+pin:
+#   Pin connected to the Smart Effector Z Probe output pin (pin 5). Note that
+#   pullup resistor on the board is generally not required. However, if the
+#   output pin is connected to the board pin with a pullup resistor, that
+#   resistor must be high value (e.g. 10K Ohm or more). Some boards have a low
+#   value pullup resistor on the Z probe input, which will likely result in an
+#   always-triggered probe state. In this case, connect the Smart Effector to
+#   a different pin on the board. This parameter is required.
+#control_pin:
+#   Pin connected to the Smart Effector control input pin (pin 7). If provided,
+#   Smart Effector sensitivity programming commands become available.
+#probe_accel:
+#   If set, limits the acceleration of the probing moves (in mm/sec^2).
+#   A sudden large acceleration at the beginning of the probing move may
+#   cause spurious probe triggering, especially if the hotend is heavy.
+#   To prevent that, it may be necessary to reduce the acceleration of
+#   the probing moves via this parameter.
+#recovery_time: 0.4
+#   A delay between the travel moves and the probing moves in seconds. A fast
+#   travel move prior to probing may result in a spurious probe triggering.
+#   This may cause 'Probe triggered prior to movement' errors if no delay
+#   is set. Value 0 disables the recovery delay.
+#   Default value is 0.4.
+#x_offset:
+#y_offset:
+#   Should be left unset (or set to 0).
+z_offset:
+#   Trigger height of the probe. Start with -0.1 (mm), and adjust later using
+#   `PROBE_CALIBRATE` command. This parameter must be provided.
+#speed:
+#   Speed (in mm/s) of the Z axis when probing. It is recommended to start
+#   with the probing speed of 20 mm/s and adjust it as necessary to improve
+#   the accuracy and repeatability of the probe triggering.
+#samples:
+#sample_retract_dist:
+#samples_result:
+#samples_tolerance:
+#samples_tolerance_retries:
+#activate_gcode:
+#deactivate_gcode:
+#deactivate_on_each_sample:
+#   See the "probe" section for more information on the parameters above.
 ```
 
 ## Additional stepper motors and extruders
@@ -2460,14 +2517,25 @@ information.
 #sensor_type:
 #sensor_pin:
 #control:
-#pid_Kp:
-#pid_Ki:
-#pid_Kd:
-#pid_deriv_time:
 #max_delta:
 #min_temp:
 #max_temp:
 #   See the "extruder" section for a description of the above parameters.
+#pid_Kp:
+#pid_Ki:
+#pid_Kd:
+#   The proportional (pid_Kp), integral (pid_Ki), and derivative
+#   (pid_Kd) settings for the PID feedback control system. Klipper
+#   evaluates the PID settings with the following general formula:
+#     fan_pwm = max_power - (Kp*e + Ki*integral(e) - Kd*derivative(e)) / 255
+#   Where "e" is "target_temperature - measured_temperature" and
+#   "fan_pwm" is the requested fan rate with 0.0 being full off and
+#   1.0 being full on. The pid_Kp, pid_Ki, and pid_Kd parameters must
+#   be provided when the PID control algorithm is enabled.
+#pid_deriv_time: 2.0
+#   A time value (in seconds) over which temperature measurements will
+#   be smoothed when using the PID control algorithm. This may reduce
+#   the impact of measurement noise. The default is 2 seconds.
 #target_temp: 40.0
 #   A temperature (in Celsius) that will be the target temperature.
 #   The default is 40 degrees.
@@ -2505,7 +2573,145 @@ with the SET_FAN_SPEED [gcode command](G-Codes.md#fan_generic).
 #   See the "fan" section for a description of the above parameters.
 ```
 
-## Additional servos, LEDs, buttons, and other pins
+## LEDs
+
+### [led]
+
+Support for LEDs (and LED strips) controlled via micro-controller PWM
+pins (one may define any number of sections with an "led" prefix). See
+the [command reference](G-Codes.md#led) for more information.
+
+```
+[led my_led]
+#red_pin:
+#green_pin:
+#blue_pin:
+#white_pin:
+#   The pin controlling the given LED color. At least one of the above
+#   parameters must be provided.
+#cycle_time: 0.010
+#   The amount of time (in seconds) per PWM cycle. It is recommended
+#   this be 10 milliseconds or greater when using software based PWM.
+#   The default is 0.010 seconds.
+#hardware_pwm: False
+#   Enable this to use hardware PWM instead of software PWM. When
+#   using hardware PWM the actual cycle time is constrained by the
+#   implementation and may be significantly different than the
+#   requested cycle_time. The default is False.
+#initial_RED: 0.0
+#initial_GREEN: 0.0
+#initial_BLUE: 0.0
+#initial_WHITE: 0.0
+#   Sets the initial LED color. Each value should be between 0.0 and
+#   1.0. The default for each color is 0.
+```
+
+### [neopixel]
+
+Neopixel (aka WS2812) LED support (one may define any number of
+sections with a "neopixel" prefix). See the
+[command reference](G-Codes.md#led) for more information.
+
+Note that the [linux mcu](RPi_microcontroller.md) implementation does
+not currently support directly connected neopixels. The current design
+using the Linux kernel interface does not allow this scenario because
+the kernel GPIO interface is not fast enough to provide the required
+pulse rates.
+
+```
+[neopixel my_neopixel]
+pin:
+#   The pin connected to the neopixel. This parameter must be
+#   provided.
+#chain_count:
+#   The number of Neopixel chips that are "daisy chained" to the
+#   provided pin. The default is 1 (which indicates only a single
+#   Neopixel is connected to the pin).
+#color_order: GRB
+#   Set the pixel order required by the LED hardware (using a string
+#   containing the letters R, G, B, W with W optional). Alternatively,
+#   this may be a comma separated list of pixel orders - one for each
+#   LED in the chain. The default is GRB.
+#initial_RED: 0.0
+#initial_GREEN: 0.0
+#initial_BLUE: 0.0
+#initial_WHITE: 0.0
+#   See the "led" section for information on these parameters.
+```
+
+### [dotstar]
+
+Dotstar (aka APA102) LED support (one may define any number of
+sections with a "dotstar" prefix). See the
+[command reference](G-Codes.md#led) for more information.
+
+```
+[dotstar my_dotstar]
+data_pin:
+#   The pin connected to the data line of the dotstar. This parameter
+#   must be provided.
+clock_pin:
+#   The pin connected to the clock line of the dotstar. This parameter
+#   must be provided.
+#chain_count:
+#   See the "neopixel" section for information on this parameter.
+#initial_RED: 0.0
+#initial_GREEN: 0.0
+#initial_BLUE: 0.0
+#   See the "led" section for information on these parameters.
+```
+
+### [pca9533]
+
+PCA9533 LED support. The PCA9533 is used on the mightyboard.
+
+```
+[pca9533 my_pca9533]
+#i2c_address: 98
+#   The i2c address that the chip is using on the i2c bus. Use 98 for
+#   the PCA9533/1, 99 for the PCA9533/2. The default is 98.
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed:
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
+#initial_RED: 0.0
+#initial_GREEN: 0.0
+#initial_BLUE: 0.0
+#initial_WHITE: 0.0
+#   See the "led" section for information on these parameters.
+```
+
+### [pca9632]
+
+PCA9632 LED support. The PCA9632 is used on the FlashForge Dreamer.
+
+```
+[pca9632 my_pca9632]
+#i2c_address: 98
+#   The i2c address that the chip is using on the i2c bus. This may be
+#   96, 97, 98, or 99.  The default is 98.
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed:
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
+#scl_pin:
+#sda_pin:
+#   Alternatively, if the pca9632 is not connected to a hardware I2C
+#   bus, then one may specify the "clock" (scl_pin) and "data"
+#   (sda_pin) pins. The default is to use hardware I2C.
+#color_order: RGBW
+#   Set the pixel order of the LED (using a string containing the
+#   letters R, G, B, W). The default is RGBW.
+#initial_RED: 0.0
+#initial_GREEN: 0.0
+#initial_BLUE: 0.0
+#initial_WHITE: 0.0
+#   See the "led" section for information on these parameters.
+```
+
+## Additional servos, buttons, and other pins
 
 ### [servo]
 
@@ -2536,100 +2742,6 @@ pin:
 #   Initial pulse width time (in seconds) to set the servo to. (This
 #   is only valid if initial_angle is not set.) The default is to not
 #   send any signal at startup.
-```
-
-### [neopixel]
-
-Neopixel (aka WS2812) LED support (one may define any number of
-sections with a "neopixel" prefix). One may set the LED color via
-"SET_LED LED=my_neopixel RED=0.1 GREEN=0.1 BLUE=0.1" type extended
-[g-code commands](G-Codes.md#neopixel).
-
-```
-[neopixel my_neopixel]
-pin:
-#   The pin connected to the neopixel. This parameter must be
-#   provided.
-#chain_count:
-#   The number of Neopixel chips that are "daisy chained" to the
-#   provided pin. The default is 1 (which indicates only a single
-#   Neopixel is connected to the pin).
-#color_order: GRB
-#   Set the pixel order required by the LED hardware. Options are GRB,
-#   RGB, BRG, BGR, GRBW, or RGBW. The default is GRB.
-#initial_RED: 0.0
-#initial_GREEN: 0.0
-#initial_BLUE: 0.0
-#initial_WHITE: 0.0
-#   Sets the initial LED color of the Neopixel. Each value should be
-#   between 0.0 and 1.0. The WHITE option is only available on RGBW
-#   LEDs. The default for each color is 0.
-```
-
-### [dotstar]
-
-Dotstar (aka APA102) LED support (one may define any number of
-sections with a "dotstar" prefix). One may set the LED color via
-"SET_LED LED=my_dotstar RED=0.1 GREEN=0.1 BLUE=0.1" type extended
-[g-code commands](G-Codes.md#neopixel).
-
-```
-[dotstar my_dotstar]
-data_pin:
-#   The pin connected to the data line of the dotstar. This parameter
-#   must be provided.
-clock_pin:
-#   The pin connected to the clock line of the dotstar. This parameter
-#   must be provided.
-#chain_count:
-#initial_RED: 0.0
-#initial_GREEN: 0.0
-#initial_BLUE: 0.0
-#   See the "neopixel" section for information on these parameters.
-```
-
-### [PCA9533]
-
-PCA9533 LED support. The PCA9533 is used on the mightyboard.
-
-```
-[pca9533 my_pca9533]
-#i2c_address: 98
-#   The i2c address that the chip is using on the i2c bus. Use 98 for
-#   the PCA9533/1, 99 for the PCA9533/2. The default is 98.
-#i2c_mcu:
-#i2c_bus:
-#i2c_speed:
-#   See the "common I2C settings" section for a description of the
-#   above parameters.
-#initial_RED: 0
-#initial_GREEN: 0
-#initial_BLUE: 0
-#initial_WHITE: 0
-#   The PCA9533 only supports 1 or 0. The default is 0. On the
-#   mightyboard, the white led is not populated.
-#   Use GCODE to modify led values after startup.
-#   set_led led=my_pca9533 red=1 green=1 blue=1
-```
-### [PCA9632]
-
-PCA9632 LED support. The PCA9632 is used on the FlashForge Dreamer.
-
-```
-[pca9632 my_pca9632]
-scl_pin:
-# The SCL "clock" pin. This parameter must be provided.
-sda_pin:
-# The SDA "data" pin. This parameter must be provided.
-#initial_RED: 0
-#initial_GREEN: 0
-#initial_BLUE: 0
-#initial_WHITE: 0
-# PCA9632 supports individual LED PWM.
-# Values range from 0.0 to 1.0. The default is 0.0.
-# On the FlashForge Dreamer, the white led is not populated.
-# Use GCODE to modify led values after startup.
-# set_led led=my_pca9632 red=1.0 green=1.0 blue=1.0 white=0.0
 ```
 
 ### [gcode_button]
@@ -3525,12 +3637,18 @@ text:
 ### [display_template]
 
 Display data text "macros" (one may define any number of sections with
-a display_template prefix). This feature allows one to reduce
-repetitive definitions in display_data sections. One may use the
-builtin render() function in display_data sections to evaluate a
-template. For example, if one were to define `[display_template
-my_template]` then one could use `{ render('my_template') }` in a
-display_data section.
+a display_template prefix). See the
+[command templates](Command_Templates.md) document for information on
+template evaluation.
+
+This feature allows one to reduce repetitive definitions in
+display_data sections. One may use the builtin `render()` function in
+display_data sections to evaluate a template. For example, if one were
+to define `[display_template my_template]` then one could use `{
+render('my_template') }` in a display_data section.
+
+This feature can also be used for continuous LED updates using the
+[SET_LED_TEMPLATE](G-Codes.md#set_led_template) command.
 
 ```
 [display_template my_template_name]
@@ -3543,9 +3661,9 @@ display_data section.
 #   "param_speed = 75" might have a caller with
 #   "render('my_template_name', param_speed=80)". Parameter names may
 #   not use upper case characters.
-#text:
-#   The text to return when the render() function is called for this
-#   template. This field is evaluated using command templates (see
+text:
+#   The text to return when the this template is rendered. This field
+#   is evaluated using command templates (see
 #   docs/Command_Templates.md). This parameter must be provided.
 ```
 
