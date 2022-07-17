@@ -71,6 +71,11 @@ BOARD_DEFS = {
         'mcu': 'stm32h743xx',
         'spi_bus': 'spi3a',
         'cs_pin': 'PA15'
+    },
+    'monster8': {
+        'mcu': "stm32f407xx",
+        'spi_bus': "spi3a",
+        "cs_pin": "PC9"
     }
 }
 
@@ -106,7 +111,9 @@ BOARD_ALIASES = {
     'fysetc-spider-v1': BOARD_DEFS['fysetc-spider'],
     'fysetc-s6-v1.2': BOARD_DEFS['fysetc-spider'],
     'fysetc-s6-v2': BOARD_DEFS['fysetc-spider'],
-    'btt-octopus-v1': BOARD_DEFS['btt-octopus']
+    'btt-octopus-v1': BOARD_DEFS['btt-octopus'],
+    'monster8': BOARD_DEFS['monster8'],
+    'robin_v3': BOARD_DEFS['monster8']
 }
 
 
