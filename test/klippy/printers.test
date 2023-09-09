@@ -34,6 +34,7 @@ CONFIG ../../config/printer-bq-hephestos-2014.cfg
 CONFIG ../../config/printer-creality-cr5pro-ht-2022.cfg
 CONFIG ../../config/printer-creality-cr10-v3-2020.cfg
 CONFIG ../../config/printer-creality-cr10s-2017.cfg
+CONFIG ../../config/printer-creality-cr10s-pro-v2-2020.cfg
 CONFIG ../../config/printer-creality-cr20-2018.cfg
 CONFIG ../../config/printer-creality-cr20-pro-2019.cfg
 CONFIG ../../config/printer-creality-ender5plus-2019.cfg
@@ -190,6 +191,7 @@ CONFIG ../../config/printer-flsun-qqs-2020.cfg
 CONFIG ../../config/printer-fokoos-odin5-f3-2021.cfg
 CONFIG ../../config/printer-geeetech-301-2019.cfg
 CONFIG ../../config/printer-kingroon-kp3s-2020.cfg
+CONFIG ../../config/printer-longer-lk4x-2022.cfg
 CONFIG ../../config/printer-tronxy-x5sa-v6-2019.cfg
 CONFIG ../../config/printer-tronxy-x5sa-pro-2020.cfg
 CONFIG ../../config/printer-tronxy-xy-2-Pro-2020.cfg
