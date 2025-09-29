@@ -1705,6 +1705,27 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#load_cell_probe" class="md-nav__link">
+    [load_cell_probe]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_cell_test_tap" class="md-nav__link">
+    LOAD_CELL_TEST_TAP
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load-cell-command-extensions" class="md-nav__link">
+    Load Cell Command Extensions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#manual_probe" class="md-nav__link">
     [manual_probe]
   </a>
@@ -4021,6 +4042,27 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#load_cell_probe" class="md-nav__link">
+    [load_cell_probe]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_cell_test_tap" class="md-nav__link">
+    LOAD_CELL_TEST_TAP
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load-cell-command-extensions" class="md-nav__link">
+    Load Cell Command Extensions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#manual_probe" class="md-nav__link">
     [manual_probe]
   </a>
@@ -5030,8 +5072,10 @@ will be calibrated. If not specified, the axis defaults to <code>'X'</code>.</li
 [ADAPTIVE_MARGIN=&lt;value&gt;]</code>: This command probes the bed using generated points
 specified by the parameters in the config. After probing, a mesh is generated
 and z-movement is adjusted according to the mesh.
+The mesh is immediately active after successful completion of <code>BED_MESH_CALIBRATE</code>.
 The mesh will be saved into a profile specified by the <code>PROFILE</code> parameter,
-or <code>default</code> if unspecified.
+or <code>default</code> if unspecified. If ADAPTIVE=1 is specified then the profile
+name will begin with <code>adaptive-</code> and should not be saved for reuse.
 See the PROBE command for details on the optional probe parameters. If
 METHOD=manual is specified then the manual probing tool is activated - see the
 MANUAL_PROBE command above for details on the additional commands available
@@ -5194,7 +5238,7 @@ restored and "MOVE_SPEED" is specified, then the toolhead moves will be
 performed with the given speed (in mm/s); otherwise the toolhead move will
 use the rail homing speed. Note that the carriages restore their positions
 only over their own axis, which may be necessary to correctly restore COPY
-and MIRROR mode of the dual carraige.</p>
+and MIRROR mode of the dual carriage.</p>
 <h3 id="endstop_phase">[endstop_phase]<a class="headerlink" href="#endstop_phase" title="Permanent link">&para;</a></h3>
 <p>The following commands are available when an
 <a href="Config_Reference.html#endstop_phase">endstop_phase config section</a> is
@@ -5640,12 +5684,46 @@ utility. Calibration is a 3 step process:</p>
 <p><code>LOAD_CELL_TARE [LOAD_CELL=&lt;config_name&gt;]</code>: This works just like the tare button
 on digital scale. It sets the current raw reading of the load cell to be the
 zero point reference value. The response is the percentage of the sensors range
-that was read and the raw value in counts.</p>
+that was read and the raw value in counts. If the load cell is calibrated a
+force in grams is also reported.</p>
 <h3 id="load_cell_read-load_cellname">LOAD_CELL_READ load_cell="name"<a class="headerlink" href="#load_cell_read-load_cellname" title="Permanent link">&para;</a></h3>
 <p><code>LOAD_CELL_READ [LOAD_CELL=&lt;config_name&gt;]</code>:
 This command takes a reading from the load cell. The response is the percentage
 of the sensors range that was read and the raw value in counts. If the load cell
 is calibrated a force in grams is also reported.</p>
+<h3 id="load_cell_probe">[load_cell_probe]<a class="headerlink" href="#load_cell_probe" title="Permanent link">&para;</a></h3>
+<p>The following commands are enabled if a
+<a href="Config_Reference.html#load_cell_probe">load_cell config section</a> has been
+enabled.</p>
+<h3 id="load_cell_test_tap">LOAD_CELL_TEST_TAP<a class="headerlink" href="#load_cell_test_tap" title="Permanent link">&para;</a></h3>
+<p><code>LOAD_CELL_TEST_TAP [TAPS=&lt;taps&gt;] [TIMEOUT=&lt;timeout&gt;]</code>: Run a testing routine
+that reports taps on the load cell. The toolhead will not move but the load cell
+probe will sense taps just as if it was probing. This can be used as a
+sanity check to make sure that the probe works. This tool replaces
+QUERY_ENDSTOPS and QUERY_PROBE for load cell probes.</p>
+<ul>
+<li><code>TAPS</code>: the number of taps the tool expects</li>
+<li><code>TIMEOOUT</code>: the time, in seconds, that the tool waits for each tab before
+  aborting.</li>
+</ul>
+<h3 id="load-cell-command-extensions">Load Cell Command Extensions<a class="headerlink" href="#load-cell-command-extensions" title="Permanent link">&para;</a></h3>
+<p>Commands that perform probes, such as <a href="#probe"><code>PROBE</code></a>,
+<a href="#probe_accuracy"><code>PROBE_ACCURACY</code></a>,
+<a href="#bed_mesh_calibrate"><code>BED_MESH_CALIBRATE</code></a> etc. will accept additional
+parameters if a <code>[load_cell_probe]</code> is defined. The parameters override the
+corresponding settings from the
+<a href="Config_Reference.html#load_cell_probe"><code>[load_cell_probe]</code></a> configuration:</p>
+<ul>
+<li><code>FORCE_SAFETY_LIMIT=&lt;grams&gt;</code></li>
+<li><code>TRIGGER_FORCE=&lt;grams&gt;</code></li>
+<li><code>DRIFT_FILTER_CUTOFF_FREQUENCY=&lt;frequency_hz&gt;</code></li>
+<li><code>DRIFT_FILTER_DELAY=&lt;1|2&gt;</code></li>
+<li><code>BUZZ_FILTER_CUTOFF_FREQUENCY=&lt;frequency_hz&gt;</code></li>
+<li><code>BUZZ_FILTER_DELAY=&lt;1|2&gt;</code></li>
+<li><code>NOTCH_FILTER_FREQUENCIES=&lt;list of frequency_hz&gt;</code></li>
+<li><code>NOTCH_FILTER_QUALITY=&lt;quality&gt;</code></li>
+<li><code>TARE_TIME=&lt;seconds&gt;</code></li>
+</ul>
 <h3 id="manual_probe">[manual_probe]<a class="headerlink" href="#manual_probe" title="Permanent link">&para;</a></h3>
 <p>The manual_probe module is automatically loaded.</p>
 <h4 id="manual_probe_1">MANUAL_PROBE<a class="headerlink" href="#manual_probe_1" title="Permanent link">&para;</a></h4>
@@ -5696,6 +5774,24 @@ reports not triggered). Normally future G-Code commands will be
 scheduled to run after the stepper move completes, however if a manual
 stepper move uses SYNC=0 then future G-Code movement commands may run
 in parallel with the stepper movement.</p>
+<p><code>MANUAL_STEPPER STEPPER=config_name GCODE_AXIS=[A-Z]
+[LIMIT_VELOCITY=&lt;velocity&gt;] [LIMIT_ACCEL=&lt;accel&gt;]
+[INSTANTANEOUS_CORNER_VELOCITY=&lt;velocity&gt;]</code>: If the <code>GCODE_AXIS</code>
+parameter is specified then it configures the stepper motor as an
+extra axis on <code>G1</code> move commands.  For example, if one were to issue a
+<code>MANUAL_STEPPER ... GCODE_AXIS=R</code> command then one could issue
+commands like <code>G1 X10 Y20 R30</code> to move the stepper motor.  The
+resulting moves will occur synchronously with the associated toolhead
+xyz movements.  If the motor is associated with a <code>GCODE_AXIS</code> then
+one may no longer issue movements using the above <code>MANUAL_STEPPER</code>
+command - one may unregister the stepper with a <code>MANUAL_STEPPER
+... GCODE_AXIS=</code> command to resume manual control of the motor. The
+<code>LIMIT_VELOCITY</code> and <code>LIMIT_ACCEL</code> parameters allow one to reduce the
+speed of <code>G1</code> moves if those moves would result in a velocity or
+acceleration above the specified limits. The
+<code>INSTANTANEOUS_CORNER_VELOCITY</code> specifies the maximum instantaneous
+velocity change (in mm/s) of the motor during the junction of two
+moves (the default is 1mm/s).</p>
 <h3 id="mcp4018">[mcp4018]<a class="headerlink" href="#mcp4018" title="Permanent link">&para;</a></h3>
 <p>The following command is available when a
 <a href="Config_Reference.html#mcp4018">mcp4018 config section</a> is
