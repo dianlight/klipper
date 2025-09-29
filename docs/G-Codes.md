@@ -174,8 +174,10 @@ The following commands are available when the
 [ADAPTIVE_MARGIN=<value>]`: This command probes the bed using generated points
 specified by the parameters in the config. After probing, a mesh is generated
 and z-movement is adjusted according to the mesh.
+The mesh is immediately active after successful completion of `BED_MESH_CALIBRATE`.
 The mesh will be saved into a profile specified by the `PROFILE` parameter,
-or `default` if unspecified.
+or `default` if unspecified. If ADAPTIVE=1 is specified then the profile
+name will begin with `adaptive-` and should not be saved for reuse.
 See the PROBE command for details on the optional probe parameters. If
 METHOD=manual is specified then the manual probing tool is activated - see the
 MANUAL_PROBE command above for details on the additional commands available
@@ -370,7 +372,7 @@ restored and "MOVE_SPEED" is specified, then the toolhead moves will be
 performed with the given speed (in mm/s); otherwise the toolhead move will
 use the rail homing speed. Note that the carriages restore their positions
 only over their own axis, which may be necessary to correctly restore COPY
-and MIRROR mode of the dual carraige.
+and MIRROR mode of the dual carriage.
 
 ### [endstop_phase]
 
@@ -894,9 +896,9 @@ uncalibrated load cells.
 `LOAD_CELL_CALIBRATE [LOAD_CELL=<config_name>]`: Start the guided calibration
 utility. Calibration is a 3 step process:
 1. First you remove all load from the load cell and run the `TARE` command
-1. Next you apply a known load to the load cell and run the
+2. Next you apply a known load to the load cell and run the
 `CALIBRATE GRAMS=nnn` command
-1. Finally use the `ACCEPT` command to save the results
+3. Finally use the `ACCEPT` command to save the results
 
 You can cancel the calibration process at any time with `ABORT`.
 
@@ -904,13 +906,47 @@ You can cancel the calibration process at any time with `ABORT`.
 `LOAD_CELL_TARE [LOAD_CELL=<config_name>]`: This works just like the tare button
 on digital scale. It sets the current raw reading of the load cell to be the
 zero point reference value. The response is the percentage of the sensors range
-that was read and the raw value in counts.
+that was read and the raw value in counts. If the load cell is calibrated a
+force in grams is also reported.
 
 ### LOAD_CELL_READ load_cell="name"
 `LOAD_CELL_READ [LOAD_CELL=<config_name>]`:
 This command takes a reading from the load cell. The response is the percentage
 of the sensors range that was read and the raw value in counts. If the load cell
 is calibrated a force in grams is also reported.
+
+### [load_cell_probe]
+
+The following commands are enabled if a
+[load_cell config section](Config_Reference.md#load_cell_probe) has been
+enabled.
+
+### LOAD_CELL_TEST_TAP
+`LOAD_CELL_TEST_TAP [TAPS=<taps>] [TIMEOUT=<timeout>]`: Run a testing routine
+that reports taps on the load cell. The toolhead will not move but the load cell
+probe will sense taps just as if it was probing. This can be used as a
+sanity check to make sure that the probe works. This tool replaces
+QUERY_ENDSTOPS and QUERY_PROBE for load cell probes.
+- `TAPS`: the number of taps the tool expects
+- `TIMEOOUT`: the time, in seconds, that the tool waits for each tab before
+  aborting.
+
+### Load Cell Command Extensions
+Commands that perform probes, such as [`PROBE`](#probe),
+[`PROBE_ACCURACY`](#probe_accuracy),
+[`BED_MESH_CALIBRATE`](#bed_mesh_calibrate) etc. will accept additional
+parameters if a `[load_cell_probe]` is defined. The parameters override the
+corresponding settings from the
+[`[load_cell_probe]`](./Config_Reference.md#load_cell_probe) configuration:
+- `FORCE_SAFETY_LIMIT=<grams>`
+- `TRIGGER_FORCE=<grams>`
+- `DRIFT_FILTER_CUTOFF_FREQUENCY=<frequency_hz>`
+- `DRIFT_FILTER_DELAY=<1|2>`
+- `BUZZ_FILTER_CUTOFF_FREQUENCY=<frequency_hz>`
+- `BUZZ_FILTER_DELAY=<1|2>`
+- `NOTCH_FILTER_FREQUENCIES=<list of frequency_hz>`
+- `NOTCH_FILTER_QUALITY=<quality>`
+- `TARE_TIME=<seconds>`
 
 ### [manual_probe]
 
@@ -967,6 +1003,25 @@ reports not triggered). Normally future G-Code commands will be
 scheduled to run after the stepper move completes, however if a manual
 stepper move uses SYNC=0 then future G-Code movement commands may run
 in parallel with the stepper movement.
+
+`MANUAL_STEPPER STEPPER=config_name GCODE_AXIS=[A-Z]
+[LIMIT_VELOCITY=<velocity>] [LIMIT_ACCEL=<accel>]
+[INSTANTANEOUS_CORNER_VELOCITY=<velocity>]`: If the `GCODE_AXIS`
+parameter is specified then it configures the stepper motor as an
+extra axis on `G1` move commands.  For example, if one were to issue a
+`MANUAL_STEPPER ... GCODE_AXIS=R` command then one could issue
+commands like `G1 X10 Y20 R30` to move the stepper motor.  The
+resulting moves will occur synchronously with the associated toolhead
+xyz movements.  If the motor is associated with a `GCODE_AXIS` then
+one may no longer issue movements using the above `MANUAL_STEPPER`
+command - one may unregister the stepper with a `MANUAL_STEPPER
+... GCODE_AXIS=` command to resume manual control of the motor. The
+`LIMIT_VELOCITY` and `LIMIT_ACCEL` parameters allow one to reduce the
+speed of `G1` moves if those moves would result in a velocity or
+acceleration above the specified limits. The
+`INSTANTANEOUS_CORNER_VELOCITY` specifies the maximum instantaneous
+velocity change (in mm/s) of the motor during the junction of two
+moves (the default is 1mm/s).
 
 ### [mcp4018]
 
