@@ -25,7 +25,8 @@ class SX1509(object):
     def __init__(self, config):
         self._printer = config.get_printer()
         self._name = config.get_name().split()[1]
-        self._i2c = bus.MCU_I2C_from_config(config, default_speed=400000)
+        self._i2c = bus.MCU_I2C_from_config(config, default_speed=400000,
+                                            async_write_only=True)
         self._ppins = self._printer.lookup_object("pins")
         self._ppins.register_chip("sx1509_" + self._name, self)
         self._mcu = self._i2c.get_mcu()
@@ -92,7 +93,8 @@ class SX1509(object):
             # Byte
             data += [self.reg_i_on_dict[reg] & 0xFF]
         clock = self._mcu.print_time_to_clock(print_time)
-        self._i2c.i2c_write(data, minclock=self._last_clock, reqclock=clock)
+        self._i2c.i2c_write_noack(data, minclock=self._last_clock,
+                                  reqclock=clock)
         self._last_clock = clock
 
 class SX1509_digital_out(object):
@@ -177,6 +179,8 @@ class SX1509_pwm(object):
         self._shutdown_value = max(0., min(1., shutdown_value))
         self._sx1509.set_register(self._i_on_reg,
                                   ~int(255 * self._start_value) & 0xFF)
+    def next_aligned_print_time(self, print_time, allow_early=0.):
+        return print_time
     def set_pwm(self, print_time, value):
         self._sx1509.set_register(self._i_on_reg, ~int(255 * value)
                                   if not self._invert

@@ -8,6 +8,62 @@ All dates in this document are approximate.
 
 ## Changes
 
+20260207: The low-level i2c behavior of sx1509 and uc1701 devices has
+changed. Previously an i2c error would result in a shutdown, and now
+i2c errors when communicating with these devices will only generate
+warnings in the log file.
+
+20260109: The status value `{printer.probe.last_z_result}` is
+deprecated; it will be removed in the near future. Use
+`{printer.probe.last_probe_position}` instead, and note that this new
+value already has the probe's configured xyz offsets applied.
+
+20260109: The g-code console text output from the `PROBE`,
+`PROBE_ACCURACY`, and similar commands has changed. Now Z heights are
+reported relative to the nominal bed Z position instead of relative to
+the probe's configured `z_offset`. Similarly, intermediate probe x and
+y console reports will also have the probe's configured `x_offset` and
+`y_offset` applied.
+
+20260109: The `[screws_tilt_adjust]` module now reports the status
+variable `{printer.screws_tilt_adjust.result.screw1.z}` with the
+probe's `z_offset` applied. That is, one would previously need to
+subtract the probe's configured `z_offset` to find the absolute Z
+deviation at the given screw location and now one must not apply the
+`z_offset`.
+
+20251122: An option `axis` has been added to `[carriage <name>]`
+sections for `generic_cartesian` kinematics, allowing arbitrary names
+for primary carriages. Users are encouraged to explicitly specify
+`axis` option now.
+
+20251106: The status fields `{printer.toolhead.position}`,
+`{printer.gcode_move.position}`,
+`{printer.gcode_move.gcode_position}`, and
+`{printer.motion_report.live_position}` are changing. These
+coordinates used to always contain four components, but now may
+contain additional components. The ordering and number of components
+may change at run-time - see the
+[status reference](Status_Reference.md#accessing-coordinates) for
+important details. Accessing any of these coordinates in macros using
+the ".e" accessor is deprecated - use something like
+`{printer.toolhead.position[printer.gcode_move.axis_map.E]}` as an
+alternative.
+
+20251106: The status fields `{printer.gcode_move.homing_origin}`,
+`{printer.toolhead.axis_min}`, and `{printer.toolhead.axis_max}`
+currently contain four components where the fourth component is always
+zero. This behavior is deprecated. In the future these coordinates may
+contain only three components. For additional information see the
+[status reference](Status_Reference.md#accessing-coordinates).
+
+20251010: During normal printing the command processing will now
+attempt to stay one second ahead of printer movement (reduced from two
+seconds previously).
+
+20251003: Support for the undocumented `max_stepper_error` option in
+the `[printer]` config section has been removed.
+
 20250916: The definitions of EI, 2HUMP_EI, and 3HUMP_EI input shapers
 were updated. For best performance it is recommended to recalibrate
 input shapers, especially if some of these shapers are currently used.

@@ -21,8 +21,8 @@ class HybridCoreXYKinematics:
         self.rails[1].setup_itersolve('cartesian_stepper_alloc', b'y')
         self.rails[2].setup_itersolve('cartesian_stepper_alloc', b'z')
         ranges = [r.get_range() for r in self.rails]
-        self.axes_min = toolhead.Coord(*[r[0] for r in ranges], e=0.)
-        self.axes_max = toolhead.Coord(*[r[1] for r in ranges], e=0.)
+        self.axes_min = toolhead.Coord([r[0] for r in ranges])
+        self.axes_max = toolhead.Coord([r[1] for r in ranges])
         self.dc_module = None
         if config.has_section('dual_carriage'):
             dc_config = config.getsection('dual_carriage')
@@ -35,8 +35,8 @@ class HybridCoreXYKinematics:
             self.rails[3].setup_itersolve('corexy_stepper_alloc', b'+')
             self.dc_module = idex_modes.DualCarriages(
                     self.printer, [self.rails[0]], [self.rails[3]], axes=[0],
-                    safe_dist=dc_config.getfloat(
-                        'safe_distance', None, minval=0.))
+                    safe_dist=[dc_config.getfloat(
+                        'safe_distance', None, minval=0.)])
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
         # Setup boundary checks

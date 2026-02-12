@@ -350,8 +350,9 @@ reference a defined primary or dual carriage for `generic_cartesian`
 kinematics or be 0 (for primary carriage) or 1 (for dual carriage)
 for all other kinematics supporting IDEX. Setting the mode to `PRIMARY`
 deactivates the other carriage and makes the specified carriage execute
-subsequent G-Code commands as-is. `COPY` and `MIRROR` modes are supported
-only for dual carriages. When set to either of these modes, dual carriage
+subsequent G-Code commands as-is. Before activating `COPY` or `MIRROR`
+mode for a carriage, a different one must be activated as `PRIMARY` on
+the same axis. When set to either of these two modes, the carriage
 will then track the subsequent moves of its primary carriage and either
 copy relative movements of it (in `COPY` mode) or execute them in the
 opposite (mirror) direction (in `MIRROR` mode).
@@ -493,7 +494,7 @@ enabled.
 `SET_FAN_SPEED FAN=config_name SPEED=<speed>` This command sets the
 speed of a fan. "speed" must be between 0.0 and 1.0.
 
-`SET_FAN_SPEED PIN=config_name TEMPLATE=<template_name>
+`SET_FAN_SPEED FAN=config_name TEMPLATE=<template_name>
 [<param_x>=<literal>]`: If `TEMPLATE` is specified then it assigns a
 [display_template](Config_Reference.md#display_template) to the given
 fan. For example, if one defined a `[display_template
@@ -753,11 +754,11 @@ stepper at a time, some sequences of changes can lead to invalid
 intermediate kinematic configurations, even if the final configuration
 is valid. In such cases a user can pass `DISABLE_CHECKS=1` parameters to
 all but the last command to disable intermediate checks. For example,
-if `stepper a` and `stepper b` initially have `x-y` and `x+y` carriages
-correspondingly, then the following sequence of commands will let a user
-effectively swap the carriage controls:
-`SET_STEPPER_CARRIAGES STEPPER=a CARRIAGES=x+y DISABLE_CHECKS=1`
-and `SET_STEPPER_CARRIAGES STEPPER=b CARRIAGES=x-y`, while
+if `stepper a` and `stepper b` initially have `carriage_x-carriage_y` and
+`carriage_x+carriage_y` carriages correspondingly, then the following
+sequence of commands will let a user effectively swap the carriage controls:
+`SET_STEPPER_CARRIAGES STEPPER=a CARRIAGES=carriage_x+carriage_y DISABLE_CHECKS=1`
+and `SET_STEPPER_CARRIAGES STEPPER=b CARRIAGES=carriage_x-carriage_y`, while
 still validating the final kinematics state.
 
 ### [hall_filament_width_sensor]
@@ -828,15 +829,17 @@ been enabled (also see the
 
 #### SET_INPUT_SHAPER
 `SET_INPUT_SHAPER [SHAPER_FREQ_X=<shaper_freq_x>]
-[SHAPER_FREQ_Y=<shaper_freq_y>] [DAMPING_RATIO_X=<damping_ratio_x>]
-[DAMPING_RATIO_Y=<damping_ratio_y>] [SHAPER_TYPE=<shaper>]
-[SHAPER_TYPE_X=<shaper_type_x>] [SHAPER_TYPE_Y=<shaper_type_y>]`:
+[SHAPER_FREQ_Y=<shaper_freq_y>] [SHAPER_FREQ_Y=<shaper_freq_z>]
+[DAMPING_RATIO_X=<damping_ratio_x>] [DAMPING_RATIO_Y=<damping_ratio_y>]
+[DAMPING_RATIO_Z=<damping_ratio_z>] [SHAPER_TYPE=<shaper>]
+[SHAPER_TYPE_X=<shaper_type_x>] [SHAPER_TYPE_Y=<shaper_type_y>]
+[SHAPER_TYPE_Z=<shaper_type_z>]`:
 Modify input shaper parameters. Note that SHAPER_TYPE parameter resets
-input shaper for both X and Y axes even if different shaper types have
+input shaper for all axes even if different shaper types have
 been configured in [input_shaper] section. SHAPER_TYPE cannot be used
-together with either of SHAPER_TYPE_X and SHAPER_TYPE_Y parameters.
-See [config reference](Config_Reference.md#input_shaper) for more
-details on each of these parameters.
+together with any of SHAPER_TYPE_X, SHAPER_TYPE_Y, and SHAPER_TYPE_Z
+parameters. See [config reference](Config_Reference.md#input_shaper)
+for more details on each of these parameters.
 
 ### [led]
 
@@ -1158,23 +1161,25 @@ The following commands are available when a
 see the [probe calibrate guide](Probe_Calibrate.md)).
 
 #### PROBE
-`PROBE [PROBE_SPEED=<mm/s>] [LIFT_SPEED=<mm/s>] [SAMPLES=<count>]
-[SAMPLE_RETRACT_DIST=<mm>] [SAMPLES_TOLERANCE=<mm>]
+`PROBE [METHOD=<value>] [PROBE_SPEED=<mm/s>] [LIFT_SPEED=<mm/s>]
+[SAMPLES=<count>] [SAMPLE_RETRACT_DIST=<mm>] [SAMPLES_TOLERANCE=<mm>]
 [SAMPLES_TOLERANCE_RETRIES=<count>] [SAMPLES_RESULT=median|average]`:
 Move the nozzle downwards until the probe triggers. If any of the
 optional parameters are provided they override their equivalent
 setting in the [probe config section](Config_Reference.md#probe).
+The optional parameter `METHOD` is probe-specific.
 
 #### QUERY_PROBE
 `QUERY_PROBE`: Report the current status of the probe ("triggered" or
 "open").
 
 #### PROBE_ACCURACY
-`PROBE_ACCURACY [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
+`PROBE_ACCURACY [METHOD=<value>] [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
 [SAMPLE_RETRACT_DIST=<mm>]`: Calculate the maximum, minimum, average,
 median, and standard deviation of multiple probe samples. By default,
 10 SAMPLES are taken. Otherwise the optional parameters default to
 their equivalent setting in the probe config section.
+The optional parameter `METHOD` is probe-specific.
 
 #### PROBE_CALIBRATE
 `PROBE_CALIBRATE [SPEED=<speed>] [<probe_parameter>=<value>]`: Run a
@@ -1235,13 +1240,14 @@ The following commands are available when the
 is enabled.
 
 #### QUAD_GANTRY_LEVEL
-`QUAD_GANTRY_LEVEL [RETRIES=<value>] [RETRY_TOLERANCE=<value>]
+`QUAD_GANTRY_LEVEL [METHOD=<value>] [RETRIES=<value>] [RETRY_TOLERANCE=<value>]
 [HORIZONTAL_MOVE_Z=<value>] [<probe_parameter>=<value>]`: This command
 will probe the points specified in the config and then make
 independent adjustments to each Z stepper to compensate for tilt. See
 the PROBE command for details on the optional probe parameters. The
 optional `RETRIES`, `RETRY_TOLERANCE`, and `HORIZONTAL_MOVE_Z` values
 override those options specified in the config file.
+The optional parameter `METHOD` is probe-specific.
 
 ### [query_adc]
 
@@ -1284,13 +1290,14 @@ all enabled accelerometer chips.
 [POINT=x,y,z] [INPUT_SHAPING=<0:1>]`: Runs the resonance
 test in all configured probe points for the requested "axis" and
 measures the acceleration using the accelerometer chips configured for
-the respective axis. "axis" can either be X or Y, or specify an
-arbitrary direction as `AXIS=dx,dy`, where dx and dy are floating
+the respective axis. "axis" can either be X, Y or Z, or specify an
+arbitrary direction as `AXIS=dx,dy[,dz]`, where dx, dy, dz are floating
 point numbers defining a direction vector (e.g. `AXIS=X`, `AXIS=Y`, or
-`AXIS=1,-1` to define a diagonal direction). Note that `AXIS=dx,dy`
-and `AXIS=-dx,-dy` is equivalent. `chip_name` can be one or
-more configured accel chips, delimited with comma, for example
-`CHIPS="adxl345, adxl345 rpi"`. If POINT is specified it will override the point(s)
+`AXIS=1,-1` to define a diagonal direction in XY plane, or `AXIS=0,1,1`
+to define a direction in YZ plane). Note that `AXIS=dx,dy` and `AXIS=-dx,-dy`
+is equivalent. `chip_name` can be one or more configured accel chips,
+delimited with comma, for example `CHIPS="adxl345, adxl345 rpi"`.
+If POINT is specified it will override the point(s)
 configured in `[resonance_tester]`. If `INPUT_SHAPING=0` or not set(default),
 disables input shaping for the resonance testing, because
 it is not valid to run the resonance testing with the input shaper
@@ -1669,10 +1676,11 @@ The following commands are available when the
 [z_tilt config section](Config_Reference.md#z_tilt) is enabled.
 
 #### Z_TILT_ADJUST
-`Z_TILT_ADJUST [RETRIES=<value>] [RETRY_TOLERANCE=<value>]
+`Z_TILT_ADJUST [METHOD=<value>] [RETRIES=<value>] [RETRY_TOLERANCE=<value>]
 [HORIZONTAL_MOVE_Z=<value>] [<probe_parameter>=<value>]`: This command
 will probe the points specified in the config and then make
 independent adjustments to each Z stepper to compensate for tilt. See
 the PROBE command for details on the optional probe parameters. The
 optional `RETRIES`, `RETRY_TOLERANCE`, and `HORIZONTAL_MOVE_Z` values
 override those options specified in the config file.
+The optional parameter `METHOD` is probe-specific.
